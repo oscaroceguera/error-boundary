@@ -1,34 +1,53 @@
+import { useState, useRef } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
 import "./App.css";
 
-function ErrorFallback({ error }) {
+function ErrorFallback({ error, resetErrorBoundary }) {
   return (
     <div role="alert">
       <p>Something went wrong:</p>
       <pre style={{ color: "red" }}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try again</button>
     </div>
   );
 }
 
-function Greeting({ subject }) {
-  try {
-    return <div>Hello {subject.toUpperCase()}</div>;
-  } catch (e) {
-    return <ErrorFallback error={e} />;
+function Bomb({ username }) {
+  if (username === "bomb") {
+    throw new Error("💥 CABOOM 💥");
   }
-}
-function Farewell({ subject }) {
-  try {
-    return <div>Goodbye {subject.toUpperCase()}</div>;
-  } catch (e) {
-    return <ErrorFallback error={e} />;
-  }
+
+  return `Hi ${username}`;
 }
 
 function App() {
+  const [username, setUsername] = useState("");
+  const usernameRef = useRef(null);
+
   return (
-    <div className="App">
-      <Greeting />
-      <Farewell />
+    <div>
+      <label>
+        {`Username (don't type "bomb"): `}
+        <input
+          placeholder={`type "bomb"`}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          ref={usernameRef}
+        />
+      </label>
+      <div>
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => {
+            setUsername("");
+            usernameRef.current.focus();
+          }}
+          resetKeys={[username]}
+        >
+          <Bomb username={username} />
+        </ErrorBoundary>
+      </div>
     </div>
   );
 }
